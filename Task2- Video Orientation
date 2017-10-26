@@ -1,0 +1,25 @@
+from math import *
+import numpy as np
+import cv2
+import math
+from scipy import ndimage
+cap = cv2.VideoCapture('VID-20170811-WA0000.mp4')
+b=int(input("Enter the angle"))
+while(cap.isOpened()):
+    ret, img = cap.read()
+    cv2.imshow('Original',img)
+    num_rows,num_cols=img.shape[:2]
+    rotation_matrix=cv2.getRotationMatrix2D((num_cols/2,num_rows/2),-b,1)
+    img2=cv2.warpAffine(img,rotation_matrix,(num_cols,num_rows))
+    im=ndimage.rotate(img,-b)
+    cv2.imshow('Rotated video',im)
+    a=rotation_matrix[1,1]
+    a1=math.acos(a)
+    a2=math.degrees(a1)
+    num_rows1,num_cols1=im.shape[:2]
+    cv2.imshow('Corrected',ndimage.rotate(im,a2-360))
+    k=cv2.waitKey(30) & 0xff
+    if k==27:
+      break
+cap.release()
+cv2.destroyAllWindows()
