@@ -1,0 +1,157 @@
+from math import *
+import numpy as np
+from numpy import matrix
+import cv2
+import math
+
+class TransformParam(object):
+	def __init__(self, _dx, _dy, _da):
+		self._dx = _dx
+		self._dy = _dy
+		self._da = _da
+
+ # angle
+class Trajectory(object):
+	def __init__(self, _x, _y, _a):
+		self._x = _x
+		self._y = _y
+		self._a = _a
+class GlobalMembers(object):
+	def __init__(self):
+		self._SMOOTHING_RADIUS = 30
+		self._HORIZONTAL_BORDER_CROP = 20
+	def Main(argc, args):
+		if argc < 2:
+			Console.Write("./VideoStab [video.avi]")
+			Console.Write("\n")
+        	#cap = cv2.VideoCapture('input.mp4')
+        	#frame_width = int(cap.get(3))
+        	#frame_height = int(cap.get(4))
+        	#out = cv2.VideoWriter('stabilized.avi',cv2.cv.CV_FOURCC(*'XVID'), 10, (frame_width,frame_height))
+   		#while(cap.isOpened()):
+       			#ret, img = cap.read()
+       			#cv2.imshow('Original',img)
+			cap = VideoCapture(args[1])			
+			cur=np.matrix([200,200,3],dtype=np.uint8)
+       			prev_to_cur_transform=[]
+       			k=1
+       			max_frames = cap.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
+     			while(True):
+        		
+    				if(cur.data==None):
+         			   break
+    				prev_corner=[]
+    				cur_corner=[]
+    				prev_corner2=[]
+    				cur_corner2=[]
+    				status=[]
+    				err=[]
+        		GlobalMembers.goodFeaturesToTrack(prev_grey, prev_corner, 200, 0.01, 30)
+			GlobalMembers.calcOpticalFlowPyrLK(prev_grey, cur_grey, prev_corner, cur_corner, status, err)
+        	        i = 0
+			while i < len(status):
+	     			if status[i]:
+			            prev_corner2.push_back(prev_corner[i])
+			            cur_corner2.push_back(cur_corner[i])
+	     			i += 1
+                	T = np.zeros((3,3))
+                        T=GlobalMembers.estimateRigidTransform(prev_corner2, cur_corner2, False)
+               	        last_T = np.matrix([200,200,3],dtype=np.uint8)
+			if T.data==None:
+	  			    last_T=T.copy()
+       			T=last_T.copy()
+       			dx = T[0, 2]
+			dy = T[1, 2]
+			da = math.atan2(T[1, 0], T[0, 0])
+			prev_to_cur_transform.append(TransformParam(dx, dy, da))
+			out_transform = int(k) + int(dx) + int(dy) + int(da)
+			prev = np.zeros((3,3))
+			prev_grey = np.zeros((3,3)) 
+       			cur=prev.copy()
+			cur_grey=prev_grey.copy()
+			
+      			a = 0
+      			x = 0
+      			y = 0
+      			trajectory =[] # trajectory at all frames
+      			i = 0
+      			while i < len(prev_to_cur_transform):
+				x += prev_to_cur_transform[i].dx
+				y += prev_to_cur_transform[i].dy
+				a += prev_to_cur_transform[i].da
+				trajectory.push_back(Trajectory(x, y, a))
+				out_trajectory << (i + 1) << " " << x << " " << y << " " << a << "\n"
+				i += 1
+      			smoothed_trajectory=[]
+      			i = 0
+      			while i < trajectory.size():
+				sum_x = 0
+				sum_y = 0
+				sum_a = 0
+				count = 0
+				j = -self._SMOOTHING_RADIUS
+			while j <= self._SMOOTHING_RADIUS:
+				if i + j >= 0 and i + j < trajectory.size():
+					sum_x += trajectory[i + j].x
+					sum_y += trajectory[i + j].y
+					sum_a += trajectory[i + j].a
+					count += 1
+				j += 1
+			avg_a = sum_a / count
+			avg_x = sum_x / count
+			avg_y = sum_y / count
+			smoothed_trajectory.push_back(Trajectory(avg_x, avg_y, avg_a))
+			out_smoothed_trajectory << (i + 1) << " " << avg_x << " " << avg_y << " " << avg_a << "\n"
+			i += 1
+      			new_prev_to_cur_transform = []
+			# Accumulated frame to frame transform
+      			a = 0
+      			x = 0
+      			y = 0
+      			i = 0
+      			while i < prev_to_cur_transform.size():
+				x += prev_to_cur_transform[i].dx
+				y += prev_to_cur_transform[i].dy
+				a += prev_to_cur_transform[i].da
+				# target - current
+				diff_x = smoothed_trajectory[i].x - x
+				diff_y = smoothed_trajectory[i].y - y
+				diff_a = smoothed_trajectory[i].a - a
+				dx = prev_to_cur_transform[i].dx + diff_x
+				dy = prev_to_cur_transform[i].dy + diff_y
+				da = prev_to_cur_transform[i].da + diff_a
+				new_prev_to_cur_transform.push_back(TransformParam(dx, dy, da))
+				out_new_transform << (i + 1) << " " << dx << " " << dy << " " << da << "\n"
+				i += 1
+      			cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)   
+      			T = cv.CreateMat(2, 3, CV_64F)
+      			vert_border = self._HORIZONTAL_BORDER_CROP * prev.rows / prev.cols # get the aspect ratio correct
+      			k = 0
+      			while k < max_frames - 1:
+				cap >> cur
+				if cur.data == None:
+	    				break
+							
+			T[0, 0] = Math.Cos(new_prev_to_cur_transform[k].da)
+			T[0, 1] = -Math.Sin(new_prev_to_cur_transform[k].da)
+			T[1, 0] = Math.Sin(new_prev_to_cur_transform[k].da)
+			T[1, 1] = Math.Cos(new_prev_to_cur_transform[k].da)
+			T[0, 2] = new_prev_to_cur_transform[k].dx
+			T[1, 2] = new_prev_to_cur_transform[k].dy
+        		GlobalMembers.warpAffine(cur, cur2, T, cur.size())
+			cur2 = GlobalMembers.cur2(GlobalMembers.Range(vert_border, cur2.rows - vert_border), GlobalMembers.Range(self._HORIZONTAL_BORDER_CROP, cur2.cols - self._HORIZONTAL_BORDER_CROP))
+			# Resize cur2 back to cur size, for better side by side comparison
+			GlobalMembers.resize(cur2, cur2, cur.size())
+			canvas = np.zeros(cur.rows, cur.cols * 2 + 10, cur.type())
+        		cur=(GlobalMembers.canvas(Range.all(), GlobalMembers.Range(0, cur2.cols))).copy()
+        		cur2=(GlobalMembers.canvas(Range.all(), GlobalMembers.Range(cur2.cols + 10, cur2.cols * 2 + 10))).copy()
+        		if canvas.cols > 1920:
+				GlobalMembers.resize(canvas, canvas, GlobalMembers.Size(canvas.cols / 2, canvas.rows / 2))
+			GlobalMembers.imshow("before and after", canvas)
+			GlobalMembers.waitKey(20)
+			k += 1
+                cv2.imshow("Stabilized",canvas)
+		cap.release()
+		cv2.destroyAllWindows()
+        
+        
