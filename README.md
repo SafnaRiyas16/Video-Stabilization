@@ -12,8 +12,8 @@ Librairies  Used :
 #Task2: Video Orientation. The video was rotated in an arbitrary angle and the video was corrected.
 
 To run:
- python task1.py
- python task2.py
+ python Task1-Image Orientation.py
+ python Task2-Video Orientation.py
  
 #References :
 
