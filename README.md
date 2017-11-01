@@ -1,11 +1,20 @@
 # Video-Stabilization
-# Packages Used :
-cv2,numpy,scipy,math
+Librairies  Used :
+•cv2
+•numPy
+•sciPy
+•math
 
+
+ 
 #Task1 : Task 1 is image orientation. An input image will be given. The image is made to rotate and the program returns the angle in which the image was rotated.
 
 #Task2: Video Orientation. The video was rotated in an arbitrary angle and the video was corrected.
 
+To run:
+ python task1.py
+ python task2.py
+ 
 #References :
 
 http://opencv-python-
